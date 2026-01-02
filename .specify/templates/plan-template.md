@@ -31,7 +31,12 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+1. **Development Rules**: Confirm all code will be generated via Claude Code only, with no manual coding by humans
+2. **Architecture Constraints**: Verify Python 3.13+ will be used with in-memory data storage only (no database, files, or external services)
+3. **Code Quality**: Ensure clean architecture with separation of concerns, testability, and readable CLI output
+4. **Spec-Driven Enforcement**: Verify Constitution > Specify > Plan > Tasks hierarchy will be strictly followed
+5. **Agent Behavior**: Confirm no assumptions beyond specifications, no feature creep, and no skipping lifecycle steps
+6. **Python Console Application**: Validate console-first design with proper CLI interface and user experience
 
 ## Project Structure
 

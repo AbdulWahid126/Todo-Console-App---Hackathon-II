@@ -49,8 +49,9 @@ description: "Task list template for feature implementation"
 **Purpose**: Project initialization and basic structure
 
 - [ ] T001 Create project structure per implementation plan
-- [ ] T002 Initialize [language] project with [framework] dependencies
+- [ ] T002 Initialize Python 3.13+ project with required dependencies
 - [ ] T003 [P] Configure linting and formatting tools
+- [ ] T004 Verify constitution compliance setup (no manual coding, Claude Code only)
 
 ---
 
@@ -156,6 +157,17 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
 - [ ] TXXX Security hardening
 - [ ] TXXX Run quickstart.md validation
+
+## Phase N+1: Constitution Compliance Validation
+
+**Purpose**: Final validation that all constitution requirements are met
+
+- [ ] TXXX Verify all code was generated via Claude Code only (no manual coding)
+- [ ] TXXX Validate in-memory data storage only (no files, databases, or external services used)
+- [ ] TXXX Confirm Python 3.13+ compatibility
+- [ ] TXXX Verify single-process console application architecture
+- [ ] TXXX Confirm Spec-Kit Plus lifecycle was followed correctly
+- [ ] TXXX Validate all features trace back to specifications
 
 ---
 

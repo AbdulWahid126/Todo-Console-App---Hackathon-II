@@ -105,6 +105,12 @@
 <!--
   ACTION REQUIRED: Define measurable success criteria.
   These must be technology-agnostic and measurable.
+
+  Include compliance with constitution requirements:
+  - Python 3.13+ implementation
+  - In-memory data storage only
+  - Console application interface
+  - Spec-Kit Plus lifecycle adherence
 -->
 
 ### Measurable Outcomes
@@ -113,3 +119,11 @@
 - **SC-002**: [Measurable metric, e.g., "System handles 1000 concurrent users without degradation"]
 - **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
 - **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
+
+### Constitution Compliance
+
+- **CC-001**: Implementation MUST use Python 3.13+ as required by constitution
+- **CC-002**: Implementation MUST use in-memory data storage only (no files, databases, or external services)
+- **CC-003**: Implementation MUST be a single-process console application
+- **CC-004**: Implementation MUST follow Spec-Kit Plus lifecycle (Constitution > Specify > Plan > Tasks)
+- **CC-005**: Implementation MUST be generated via Claude Code only (no manual coding)
