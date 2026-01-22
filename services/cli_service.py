@@ -140,14 +140,14 @@ class CLIService:
         """
         help_text = """
 Available commands:
-  add "title" ["description"] - Add a new task
-  view - View all tasks
-  update [id] "new_title" ["new_description"] - Update a task
-  complete [id] - Mark a task as complete
-  incomplete [id] - Mark a task as incomplete
-  delete [id] - Delete a task
-  help - Show this help message
-  exit - Exit the application
+  - add "title" ["description"] - Add a new task
+  - view - View all tasks
+  - update [id] "new_title" ["new_description"] - Update a task
+  - complete [id] - Mark a task as complete
+  - incomplete [id] - Mark a task as incomplete
+  - delete [id] - Delete a task
+  - help - Show this help message
+  - exit - Exit the application
         """.strip()
         return help_text
 
