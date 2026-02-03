@@ -6,7 +6,7 @@ Implements dependency injection as required by constitution III. Clean Architect
 """
 from sqlmodel import Session
 from typing import Generator
-from .database.session import engine
+from database.session import engine
 
 
 def get_db() -> Generator[Session, None, None]:

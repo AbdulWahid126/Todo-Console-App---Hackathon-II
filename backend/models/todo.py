@@ -20,6 +20,9 @@ class TodoBase(SQLModel):
     title: str = Field(min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=2000)
     completed: bool = Field(default=False)
+    due_date: Optional[datetime] = Field(default=None)  # Due date for the task
+    priority: str = Field(default="medium", max_length=20)  # Priority level: low, medium, high
+    category: str = Field(default="General", max_length=50)  # Category for organization
 
 
 class Todo(TodoBase, table=True):
@@ -32,6 +35,9 @@ class Todo(TodoBase, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)  # Track last update
     user_id: str = Field(index=True)  # Will connect to user when authentication is implemented
+    due_date: Optional[datetime] = Field(default=None, index=True)  # Index for efficient date queries
+    priority: str = Field(default="medium", max_length=20, index=True)  # Index for efficient priority queries
+    category: str = Field(default="General", max_length=50, index=True)  # Index for efficient category queries
 
 
 class TodoCreate(TodoBase):
@@ -42,6 +48,9 @@ class TodoCreate(TodoBase):
     """
     title: str = Field(min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=2000)
+    due_date: Optional[datetime] = Field(default=None)
+    priority: str = Field(default="medium", max_length=20)
+    category: str = Field(default="General", max_length=50)
 
     class Config:
         json_schema_extra = {
@@ -49,7 +58,10 @@ class TodoCreate(TodoBase):
                 {
                     "title": "New todo title",
                     "description": "Optional description",
-                    "completed": False
+                    "completed": False,
+                    "due_date": "2026-12-31T23:59:59",
+                    "priority": "high",
+                    "category": "Work"
                 }
             ]
         }
@@ -64,6 +76,9 @@ class TodoUpdate(SQLModel):
     title: Optional[str] = Field(default=None, min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=2000)
     completed: Optional[bool] = None
+    due_date: Optional[datetime] = Field(default=None)
+    priority: Optional[str] = Field(default=None, max_length=20)
+    category: Optional[str] = Field(default=None, max_length=50)
 
 
 class TodoPublic(TodoBase):
@@ -84,6 +99,9 @@ class TodoPublic(TodoBase):
                     "title": "Sample todo",
                     "description": "Sample description",
                     "completed": False,
+                    "due_date": "2026-12-31T23:59:59",
+                    "priority": "high",
+                    "category": "Work",
                     "created_at": "2026-01-18T10:30:00Z",
                     "updated_at": "2026-01-18T10:30:00Z"
                 }

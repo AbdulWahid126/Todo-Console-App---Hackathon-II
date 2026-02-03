@@ -15,6 +15,9 @@ export interface Todo {
   title: string;
   description?: string | null;
   completed: boolean;
+  due_date?: string | null; // ISO 8601 datetime string for due date
+  priority: string; // Priority level: low, medium, high
+  category: string; // Category for organization
   created_at: string; // ISO 8601 datetime string
   updated_at: string; // ISO 8601 datetime string
 }
@@ -52,7 +55,7 @@ export interface ApiError {
 export interface DashboardStats {
   /**
    * Statistics for the dashboard
-   * Task: P2-T-XXX
+   * Task: P2-T-046
    * From: specs/phase-ii/dashboard-spec
    */
   total_tasks: number;
@@ -66,7 +69,7 @@ export interface DashboardStats {
 export interface CompletionTrendItem {
   /**
    * Item for completion trend data
-   * Task: P2-T-XXX
+   * Task: P2-T-047
    * From: specs/phase-ii/dashboard-spec
    */
   date: string;
@@ -77,7 +80,7 @@ export interface CompletionTrendItem {
 export interface CategoryDistributionItem {
   /**
    * Item for category distribution data
-   * Task: P2-T-XXX
+   * Task: P2-T-048
    * From: specs/phase-ii/dashboard-spec
    */
   category: string;
@@ -88,7 +91,7 @@ export interface CategoryDistributionItem {
 export interface PriorityBreakdownItem {
   /**
    * Item for priority breakdown data
-   * Task: P2-T-XXX
+   * Task: P2-T-049
    * From: specs/phase-ii/dashboard-spec
    */
   priority: string;
@@ -99,7 +102,7 @@ export interface PriorityBreakdownItem {
 export interface ChartData {
   /**
    * Analytics data for dashboard charts
-   * Task: P2-T-XXX
+   * Task: P2-T-050
    * From: specs/phase-ii/dashboard-spec
    */
   completion_trend: CompletionTrendItem[];
@@ -110,13 +113,65 @@ export interface ChartData {
 export interface TaskSummary {
   /**
    * Simplified task representation for dashboard
-   * Task: P2-T-XXX
+   * Task: P2-T-051
    * From: specs/phase-ii/dashboard-spec
    */
   id: string;
   title: string;
-  status: string;
-  priority: string;
-  due_date?: string;
-  category: string;
+  description: string;
+  completed: boolean;
+  due_date?: string | null; // ISO 8601 datetime string for due date
+  priority: string; // Priority level: low, medium, high
+  category: string; // Category for organization
+  created_at: string; // ISO 8601 datetime string
+  updated_at: string; // ISO 8601 datetime string
+}
+
+export interface User {
+  /**
+   * User type definition for authentication
+   * Task: P2-T-045
+   * From: specs/phase-ii/auth-spec
+   */
+  id: string;
+  email: string;
+  name: string;
+  is_active: boolean;
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserLoginData {
+  /**
+   * Login form data
+   * Task: P2-T-041
+   * From: specs/phase-ii/auth-spec
+   */
+  email: string;
+  password: string;
+}
+
+export interface UserRegisterData {
+  /**
+   * Registration form data
+   * Task: P2-T-042
+   * From: specs/phase-ii/auth-spec
+   */
+  email: string;
+  name: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  /**
+   * Authentication response
+   * Task: P2-T-043
+   * From: specs/phase-ii/auth-spec
+   */
+  token?: string;
+  token_type?: string;
+  user?: User;
+  error?: string;
+  message?: string;
 }

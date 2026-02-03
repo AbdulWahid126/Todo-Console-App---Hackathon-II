@@ -7,7 +7,7 @@ Implements business logic layer as required by constitution III. Clean Architect
 
 from sqlmodel import Session, select
 from typing import List, Optional
-from ..models.todo import Todo, TodoCreate, TodoUpdate, TodoPublic
+from models.todo import Todo, TodoCreate, TodoUpdate, TodoPublic
 from datetime import datetime
 import uuid
 
@@ -30,6 +30,9 @@ class TodoService:
             title=todo_create.title,
             description=todo_create.description,
             completed=todo_create.completed,
+            due_date=todo_create.due_date,
+            priority=todo_create.priority,
+            category=todo_create.category,
             user_id=user_id,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
@@ -46,6 +49,9 @@ class TodoService:
             title=todo.title,
             description=todo.description,
             completed=todo.completed,
+            due_date=todo.due_date,
+            priority=todo.priority,
+            category=todo.category,
             created_at=todo.created_at,
             updated_at=todo.updated_at
         )
@@ -65,6 +71,9 @@ class TodoService:
                 title=todo.title,
                 description=todo.description,
                 completed=todo.completed,
+                due_date=todo.due_date,
+                priority=todo.priority,
+                category=todo.category,
                 created_at=todo.created_at,
                 updated_at=todo.updated_at
             )
@@ -85,6 +94,9 @@ class TodoService:
                 title=todo.title,
                 description=todo.description,
                 completed=todo.completed,
+                due_date=todo.due_date,
+                priority=todo.priority,
+                category=todo.category,
                 created_at=todo.created_at,
                 updated_at=todo.updated_at
             ) for todo in todos
@@ -111,6 +123,12 @@ class TodoService:
             todo.description = todo_update.description
         if todo_update.completed is not None:
             todo.completed = todo_update.completed
+        if todo_update.due_date is not None:
+            todo.due_date = todo_update.due_date
+        if todo_update.priority is not None:
+            todo.priority = todo_update.priority
+        if todo_update.category is not None:
+            todo.category = todo_update.category
 
         # Update the timestamp
         todo.updated_at = datetime.utcnow()
@@ -124,6 +142,9 @@ class TodoService:
             title=todo.title,
             description=todo.description,
             completed=todo.completed,
+            due_date=todo.due_date,
+            priority=todo.priority,
+            category=todo.category,
             created_at=todo.created_at,
             updated_at=todo.updated_at
         )

@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from api.v1.todos import router as todos_router
 from api.v1.dashboard import router as dashboard_router
+from api.v1.auth import router as auth_router
 from sqlmodel import SQLModel
 from models.todo import Todo
 from database.session import engine
@@ -20,17 +21,33 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Initialize FastAPI app with metadata
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for application startup and shutdown
+    Task: P2-T-019
+    From: specs/phase-ii/data-model
+    """
+    # For development: create tables if they don't exist
+    # In production, use proper migrations with Alembic
+    # Note: We removed drop_all() to enable data persistence
+    SQLModel.metadata.create_all(bind=engine)
+    yield
+
+# Initialize FastAPI app with metadata and lifespan
 app = FastAPI(
     title="Todo API",
-    description="REST API for Todo application",
+    description="REST API for Todo application with enhanced dashboard functionality - Updated",
     version="1.0.0",
+    lifespan=lifespan
 )
 
 # Add CORS middleware for cross-origin requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # Frontend origin for development
+    allow_origins=["http://localhost:3000", "http://localhost:3005", "http://127.0.0.1:3000", "http://127.0.0.1:3005"],  # Frontend origins for development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,16 +57,7 @@ app.add_middleware(
 # Include API routers
 app.include_router(todos_router, prefix="/api/v1", tags=["todos"])
 app.include_router(dashboard_router, prefix="/api/v1", tags=["dashboard"])
-
-@app.on_event("startup")
-async def on_startup():
-    """
-    Initialize database on application startup
-    Task: P2-T-019
-    From: specs/phase-ii/data-model
-    """
-    # Create database tables
-    SQLModel.metadata.create_all(bind=engine)
+app.include_router(auth_router, prefix="/api/v1", tags=["auth"])
 
 @app.get("/")
 async def root():
@@ -69,6 +77,9 @@ async def health_check():
     """
     return {"status": "healthy", "service": "todo-api"}
 
+# Import JSONResponse for exception handlers
+from fastapi.responses import JSONResponse
+
 # Exception handlers for custom error responses
 @app.exception_handler(Exception)
 async def generic_exception_handler(request, exc):
@@ -82,5 +93,6 @@ async def generic_exception_handler(request, exc):
         content={"detail": "An internal error occurred"},
     )
 
-# Import JSONResponse for exception handlers
-from fastapi.responses import JSONResponse
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)

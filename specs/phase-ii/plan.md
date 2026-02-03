@@ -12,14 +12,14 @@ Implementation of a full-stack web application with Next.js frontend and FastAPI
 ## Technical Context
 
 **Language/Version**: Python 3.13+ (backend), TypeScript 5.7+ (frontend)
-**Primary Dependencies**: Next.js 16 with App Router, FastAPI 0.115+, SQLModel 0.0.22+, Neon PostgreSQL
+**Primary Dependencies**: Next.js 16 with App Router, FastAPI 0.115+, SQLModel 0.0.22+, Neon PostgreSQL, Better Auth
 **Storage**: Neon PostgreSQL database (persistent storage)
 **Testing**: pytest (backend), vitest (frontend)
 **Target Platform**: Web application (desktop and mobile browsers)
 **Project Type**: Full-stack monorepo with separate frontend/backend services
 **Performance Goals**: API response times <200ms (99th percentile), initial page load <3 seconds on 3G
-**Constraints**: Next.js App Router required, FastAPI backend, Neon PostgreSQL, responsive design
-**Scale/Scope**: Single-user focused initially (will expand to multi-user in later phases)
+**Constraints**: Next.js App Router required, FastAPI backend, Neon PostgreSQL, Better Auth for authentication, responsive design
+**Scale/Scope**: Multi-user focused with user data isolation via user_id filtering (per constitution requirements)
 
 ## Constitution Check
 
@@ -31,8 +31,11 @@ Implementation of a full-stack web application with Next.js frontend and FastAPI
 4. **Spec-Driven Enforcement**: Verify Constitution > Specify > Plan > Tasks hierarchy will be strictly followed
 5. **Agent Behavior**: Confirm no assumptions beyond specifications, no feature creep, and no skipping lifecycle steps
 6. **Technology Stack**: Validate Next.js/TypeScript frontend with FastAPI/Python backend architecture
-7. **Security First**: Verify JWT-based authentication with Better Auth is planned (even though not implemented in Phase II)
+7. **Security First**: Verify JWT-based authentication with Better Auth is planned and implemented (per constitution Section IV)
 8. **Feature Parity**: Confirm basic features (Add, View, Update, Delete, Mark Complete/Incomplete) are included
+9. **User Data Isolation**: Verify user_id filtering is implemented to prevent cross-user data access (per constitution Section IV)
+10. **Authentication Headers**: Confirm all API endpoints require Authorization: Bearer <token> header validation (per constitution Section IV)
+11. **Input Validation**: Verify Pydantic models are used for input validation and sanitization (per constitution Section IV)
 
 ## Project Structure
 
@@ -54,6 +57,11 @@ specs/phase-ii/
 │   ├── app/             # App Router pages
 │   │   ├── layout.tsx
 │   │   ├── page.tsx     # Home page (redirects to /todos)
+│   │   ├── auth/        # Authentication pages
+│   │   │   ├── login/
+│   │   │   │   └── page.tsx
+│   │   │   └── signup/
+│   │   │       └── page.tsx
 │   │   ├── todos/
 │   │   │   ├── page.tsx
 │   │   │   ├── new/
@@ -67,27 +75,39 @@ specs/phase-ii/
 │   │   ├── TodoItem.tsx
 │   │   ├── TodoForm.tsx
 │   │   ├── LoadingSpinner.tsx
-│   │   └── ErrorMessage.tsx
+│   │   ├── ErrorMessage.tsx
+│   │   └── AuthErrorBoundary.tsx
+│   ├── contexts/        # React contexts
+│   │   └── AuthContext.ts
+│   ├── providers/       # React providers
+│   │   └── AuthProvider.tsx
 │   ├── lib/             # Utility functions
-│   │   ├── api.ts       # API client
+│   │   ├── api.ts       # API client with auth headers
+│   │   ├── auth.ts      # Authentication utilities
 │   │   ├── types.ts     # TypeScript interfaces
 │   │   └── validation.ts # Client-side validation
 │   ├── public/
 │   └── package.json
 ├── backend/             # FastAPI application
-│   ├── main.py          # FastAPI app entry point
+│   ├── main.py          # FastAPI app entry point with auth middleware
+│   ├── auth/            # Authentication modules
+│   │   ├── config.py    # Better Auth configuration
+│   │   ├── middleware.py # Authentication middleware
+│   │   └── jwt_handler.py # JWT token handling
 │   ├── models/          # SQLModel database models
-│   │   ├── todo.py      # Todo ORM model
+│   │   ├── todo.py      # Todo ORM model with user_id relationship
 │   │   └── database.py  # Database configuration
 │   ├── services/        # Business logic
-│   │   └── todo_service.py
+│   │   └── todo_service.py # With user_id filtering
 │   ├── api/             # API routes
 │   │   └── v1/
-│   │       └── todos.py
+│   │       ├── auth.py  # Authentication endpoints
+│   │       └── todos.py # Todo endpoints with auth dependencies
 │   ├── schemas/         # Pydantic models
 │   │   ├── todo.py      # Request/response schemas
+│   │   ├── user.py      # User schemas
 │   │   └── error.py     # Error response schemas
-│   ├── dependencies.py  # Dependency injection
+│   ├── dependencies.py  # Dependency injection with auth dependencies
 │   └── requirements.txt
 ├── specs/               # All specification documents
 ├── specs-history/       # Versioned spec iterations

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
-import { signUp, checkEmailAvailability } from '../../../lib/api';
+import { register, checkEmailAvailability } from '../../../lib/api';
 
 interface SignUpForm {
   name: string;
@@ -32,6 +32,7 @@ export default function SignUpPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
   const [emailChecking, setEmailChecking] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState<PasswordStrength | null>(null);
@@ -56,8 +57,8 @@ export default function SignUpPage() {
           const isAvailable = await checkEmailAvailability(formData.email);
           setEmailAvailable(isAvailable);
         } catch (error) {
-          // If there's an error checking availability, we'll treat it as unavailable
-          setEmailAvailable(false);
+          // If there's an error checking availability, we'll treat it as available to not block registration
+          setEmailAvailable(true);
         } finally {
           setEmailChecking(false);
         }
@@ -100,6 +101,7 @@ export default function SignUpPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
     // Basic validation
     if (!formData.agreeToTerms) {
@@ -114,25 +116,40 @@ export default function SignUpPage() {
       return;
     }
 
-    if (emailAvailable === false) {
+    // Skip email availability check if still checking or if the check failed
+    if (emailAvailable === false && !emailChecking) {
       setError('This email is already registered. Try signing in?');
       setLoading(false);
       return;
     }
 
     try {
-      const result = await signUp(formData);
+      const result = await register({
+        email: formData.email,
+        name: formData.name,
+        password: formData.password
+      });
 
-      if (result.user) {
-        // Successful registration - redirect to dashboard/todos
-        router.push('/todos');
+      if (result.token) {
+        // Store the token in localStorage
+        localStorage.setItem('access_token', result.token);
+
+        // Show success message
+        setSuccess('Account created successfully.');
+
+        // Successful registration - redirect to dashboard after a short delay
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1500);
       } else {
         setError(result.message || 'Unable to create account. Please try again');
       }
-    } catch (err) {
-      setError('Connection failed. Please try again');
+    } catch (err: any) {
+      setError(err.message || 'Connection failed. Please try again');
     } finally {
-      setLoading(false);
+      if (!success) {
+        setLoading(false);
+      }
     }
   };
 
@@ -140,7 +157,6 @@ export default function SignUpPage() {
   const isFormValid =
     formData.name.trim().length >= 2 &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
-    emailAvailable === true &&
     formData.password.length >= 8 &&
     formData.password === formData.confirmPassword &&
     formData.agreeToTerms;
@@ -167,6 +183,13 @@ export default function SignUpPage() {
             </div>
           )}
 
+          {/* Success message */}
+          {success && (
+            <div className="bg-green-500/10 border border-green-500/30 text-green-400 p-3 rounded-lg mb-6">
+              {success}
+            </div>
+          )}
+
           {/* Sign-up form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -181,13 +204,12 @@ export default function SignUpPage() {
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className={`w-full px-4 py-3 bg-[rgba(255,255,255,0.05)] border ${
-                  formData.name.trim().length >= 2
-                    ? 'border-green-500/30'
-                    : formData.name && formData.name.trim().length < 2
-                      ? 'border-red-500/30'
-                      : 'border-[rgba(255,255,255,0.1)]'
-                } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+                className={`w-full px-4 py-3 bg-[rgba(255,255,255,0.05)] border ${formData.name.trim().length >= 2
+                  ? 'border-green-500/30'
+                  : formData.name && formData.name.trim().length < 2
+                    ? 'border-red-500/30'
+                    : 'border-[rgba(255,255,255,0.1)]'
+                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                 placeholder="John Doe"
               />
               {formData.name && formData.name.trim().length < 2 && (
@@ -208,15 +230,14 @@ export default function SignUpPage() {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 bg-[rgba(255,255,255,0.05)] border ${
-                    emailChecking
-                      ? 'border-blue-500/30'
-                      : emailAvailable === true
-                        ? 'border-green-500/30'
-                        : emailAvailable === false
-                          ? 'border-red-500/30'
-                          : 'border-[rgba(255,255,255,0.1)]'
-                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10`}
+                  className={`w-full px-4 py-3 bg-[rgba(255,255,255,0.05)] border ${emailChecking
+                    ? 'border-blue-500/30'
+                    : emailAvailable === true
+                      ? 'border-green-500/30'
+                      : emailAvailable === false
+                        ? 'border-red-500/30'
+                        : 'border-[rgba(255,255,255,0.1)]'
+                    } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10`}
                   placeholder="your@email.com"
                 />
                 {emailChecking && (
@@ -253,13 +274,12 @@ export default function SignUpPage() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 bg-[rgba(255,255,255,0.05)] border ${
-                    passwordStrength?.score && passwordStrength.score >= 3
-                      ? 'border-green-500/30'
-                      : formData.password
-                        ? 'border-yellow-500/30'
-                        : 'border-[rgba(255,255,255,0.1)]'
-                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12`}
+                  className={`w-full px-4 py-3 bg-[rgba(255,255,255,0.05)] border ${passwordStrength?.score && passwordStrength.score >= 3
+                    ? 'border-green-500/30'
+                    : formData.password
+                      ? 'border-yellow-500/30'
+                      : 'border-[rgba(255,255,255,0.1)]'
+                    } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12`}
                   placeholder="••••••••"
                 />
                 <button
@@ -329,13 +349,12 @@ export default function SignUpPage() {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 bg-[rgba(255,255,255,0.05)] border ${
-                    formData.confirmPassword && formData.password === formData.confirmPassword
-                      ? 'border-green-500/30'
-                      : formData.confirmPassword && formData.password !== formData.confirmPassword
-                        ? 'border-red-500/30'
-                        : 'border-[rgba(255,255,255,0.1)]'
-                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12`}
+                  className={`w-full px-4 py-3 bg-[rgba(255,255,255,0.05)] border ${formData.confirmPassword && formData.password === formData.confirmPassword
+                    ? 'border-green-500/30'
+                    : formData.confirmPassword && formData.password !== formData.confirmPassword
+                      ? 'border-red-500/30'
+                      : 'border-[rgba(255,255,255,0.1)]'
+                    } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12`}
                   placeholder="••••••••"
                 />
                 <button

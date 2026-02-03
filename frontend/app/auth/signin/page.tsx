@@ -21,6 +21,7 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,20 +36,34 @@ export default function SignInPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
-      const result = await signIn(formData);
+      const result = await signIn({
+        email: formData.email,
+        password: formData.password
+      });
 
       if (result.token) {
-        // Successful sign-in - redirect to dashboard/todos
-        router.push('/todos');
+        // Store the token in localStorage
+        localStorage.setItem('access_token', result.token);
+
+        // Show success message
+        setSuccess('Login successful.');
+
+        // Successful sign-in - redirect to dashboard after a short delay
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1500);
       } else {
         setError(result.message || 'Invalid email or password');
       }
-    } catch (err) {
-      setError('Connection failed. Please try again');
+    } catch (err: any) {
+      setError(err.message || 'Connection failed. Please try again');
     } finally {
-      setLoading(false);
+      if (!success) {
+        setLoading(false);
+      }
     }
   };
 
@@ -71,6 +86,13 @@ export default function SignInPage() {
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg mb-6">
               {error}
+            </div>
+          )}
+
+          {/* Success message */}
+          {success && (
+            <div className="bg-green-500/10 border border-green-500/30 text-green-400 p-3 rounded-lg mb-6">
+              {success}
             </div>
           )}
 
