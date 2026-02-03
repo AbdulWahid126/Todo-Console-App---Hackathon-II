@@ -8,7 +8,7 @@ import TaskModal, { TaskFormData } from '@/components/TaskModal';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { ToastContainer, ToastType } from '@/components/Toast';
 import { TaskSummary, DashboardStats } from '@/lib/types';
-import { createTodo, updateTodo, deleteTodo, fetchDashboardStats } from '@/lib/api';
+import { createTodo, updateTodo, deleteTodo, fetchDashboardStats, fetchTodosByCategory } from '@/lib/api';
 
 interface Toast {
     id: string;
@@ -17,7 +17,7 @@ interface Toast {
 }
 
 export default function CategoriesPage() {
-    const [tasks, setTasks] = useState<TaskSummary[]>([]);
+    const [tasks, setTasks] = useState<Record<string, TaskSummary[]>>({});
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState<boolean>(false);
@@ -35,18 +35,7 @@ export default function CategoriesPage() {
                 return;
             }
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api/v1'}/todos/by-category`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch tasks by category');
-            }
-
-            const data = await response.json();
+            const data = await fetchTodosByCategory(token);
             setTasks(data);
 
             const statsData = await fetchDashboardStats(token);
@@ -168,15 +157,8 @@ export default function CategoriesPage() {
         }
     };
 
-    // Group tasks by category
-    const groupedTasks = tasks.reduce((acc, task) => {
-        const category = task.category || 'Uncategorized';
-        if (!acc[category]) {
-            acc[category] = [];
-        }
-        acc[category].push(task);
-        return acc;
-    }, {} as Record<string, TaskSummary[]>);
+    // Use tasks directly since they are already grouped from the backend
+    const groupedTasks = tasks;
 
     const categoryColors: Record<string, string> = {
         'Work': 'bg-blue-500/20 text-blue-400 border-blue-500/50',
@@ -277,7 +259,7 @@ export default function CategoriesPage() {
                                     </button>
 
                                     {isExpanded && (
-                                        <div className="p-4 pt-0 space-y-4">
+                                        <div className="p-4 pt-0 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                             {categoryTasks.map((task) => (
                                                 <TaskCard
                                                     key={task.id}

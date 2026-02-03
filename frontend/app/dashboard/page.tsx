@@ -26,6 +26,7 @@ import {
   updateTodo,
   deleteTodo
 } from '@/lib/api';
+import DashboardLayout from '@/components/DashboardLayout';
 import { DashboardStats, TaskSummary, User as UserType } from '@/lib/types';
 import TaskModal, { TaskFormData } from '@/components/TaskModal';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -208,6 +209,21 @@ const DashboardPage = () => {
   };
 
   const handleToggleComplete = async (taskId: string, currentStatus: boolean) => {
+    // Optimistic update
+    const newStatus = !currentStatus;
+    setTasks(prevTasks =>
+      prevTasks.map(t => t.id === taskId ? { ...t, completed: newStatus } : t)
+    );
+
+    // Update stats optimistically too
+    if (stats) {
+      setStats({
+        ...stats,
+        completed: newStatus ? stats.completed + 1 : stats.completed - 1,
+        in_progress: newStatus ? stats.in_progress - 1 : stats.in_progress + 1
+      });
+    }
+
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
@@ -215,14 +231,13 @@ const DashboardPage = () => {
         return;
       }
 
-      await updateTodo(taskId, { completed: !currentStatus }, token);
-      showToast(`Task marked as ${!currentStatus ? 'completed' : 'incomplete'}!`, 'success');
-
-      // Refresh dashboard data
-      await fetchData();
+      await updateTodo(taskId, { completed: newStatus }, token);
+      showToast(`Task marked as ${newStatus ? 'completed' : 'incomplete'}!`, 'success');
     } catch (error) {
       console.error('Error updating task:', error);
       showToast('Failed to update task', 'error');
+      // Rollback on error
+      await fetchData();
     }
   };
 
@@ -258,8 +273,11 @@ const DashboardPage = () => {
   ] : [];
 
   return (
-    <div className="flex min-h-screen bg-gray-900">
-      {/* Toast Notifications */}
+    <DashboardLayout
+      stats={stats}
+      onAddTask={handleAddTask}
+      showAddButton={true}
+    >
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       {/* Task Creation Modal */}
@@ -286,162 +304,43 @@ const DashboardPage = () => {
         isLoading={isDeleting}
       />
 
-      {/* Mobile menu button */}
-      <button
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-gray-800 text-white"
-        onClick={toggleMobileMenu}
-      >
-        {mobileMenuOpen ? <XIcon className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-      </button>
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed md:relative z-40 h-full bg-gray-900 text-white transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0 md:w-72'
-          }`}
-        style={{
-          width: sidebarOpen ? '280px' : '0px',
-          minWidth: sidebarOpen ? '280px' : '0px'
-        }}
-      >
-        <div className="h-full flex flex-col">
-          {/* Logo */}
-          <div className="p-6 border-b border-gray-700">
-            <h1 className="text-2xl font-bold">TodoApp</h1>
-          </div>
-
-          {/* User Profile */}
-          <div className="p-4 border-b border-gray-700">
-            <div className="flex items-center space-x-3">
-              <div className="bg-blue-500 rounded-full w-10 h-10 flex items-center justify-center">
-                <User className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="font-medium">{currentUser?.name || 'User'}</p>
-                <p className="text-sm text-gray-400">{currentUser?.email || 'user@example.com'}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-4">
-            <ul className="space-y-2">
-              {navItems.map((item, index) => (
-                <li key={index}>
-                  <a
-                    href={item.href}
-                    className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${item.href === '/dashboard'
-                      ? 'bg-blue-500/20 border-l-4 border-blue-500'
-                      : 'hover:bg-gray-800'
-                      }`}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          {/* Quick Stats */}
-          <div className="p-4 border-t border-gray-700">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-gray-800 p-2 rounded text-center">
-                <p className="text-xs text-gray-400">Completed</p>
-                <p className="font-bold">{stats?.completed || 0}</p>
-              </div>
-              <div className="bg-gray-800 p-2 rounded text-center">
-                <p className="text-xs text-gray-400">Pending</p>
-                <p className="font-bold">{stats?.total_tasks ? stats.total_tasks - stats.completed : 0}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Sign Out */}
-          <div className="p-4">
-            <button
-              onClick={() => {
-                localStorage.removeItem('access_token');
-                window.location.href = '/auth/signin';
-              }}
-              className="w-full py-2 px-4 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
+      <div className="py-2">
+        {/* Page Heading */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white">Dashboard Overview</h1>
+          <p className="text-gray-400 mt-1">Good morning, {currentUser?.name || 'there'}! Here's what's happening today.</p>
         </div>
-      </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-6 md:ml-72">
-        {/* Header */}
-        <header className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-              <p className="text-gray-400">Good morning, {currentUser?.name || 'there'}! Here's what's happening today.</p>
-            </div>
-            <div className="flex items-center space-x-4 mt-4 md:mt-0">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search tasks..."
-                  className="bg-gray-800 text-white rounded-lg pl-10 pr-4 py-2 w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              </div>
-              <button className="relative p-2 rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-0 right-0 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
-              </button>
-              <div className="flex items-center space-x-3">
-                <div className="bg-blue-500 rounded-full w-8 h-8 flex items-center justify-center">
-                  <User className="w-4 h-4" />
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {statsCards.map((stat, index) => (
+            <div
+              key={index}
+              className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-blue-500/50 transition-all"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-gray-400 text-sm">{stat.title}</p>
+                  <p className="text-3xl font-bold text-white mt-2">{stat.value}</p>
                 </div>
-                <span className="hidden md:inline text-white">{currentUser?.name || 'User'}</span>
-              </div>
-              <button
-                onClick={handleAddTask}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Task</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {statsCards.map((stat, index) => (
-              <div
-                key={index}
-                className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-blue-500/50 transition-all"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-gray-400 text-sm">{stat.title}</p>
-                    <p className="text-3xl font-bold text-white mt-2">{stat.value}</p>
-                  </div>
-                  <div
-                    className="p-3 rounded-lg"
-                    style={{ backgroundColor: `${stat.color}20` }}
-                  >
-                    <div style={{ color: stat.color }}>
-                      {stat.icon}
-                    </div>
+                <div
+                  className="p-3 rounded-lg"
+                  style={{ backgroundColor: `${stat.color}20` }}
+                >
+                  <div style={{ color: stat.color }}>
+                    {stat.icon}
                   </div>
                 </div>
-                {stat.trend && (
-                  <div className={`flex items-center mt-4 text-sm ${stat.trend.direction === 'up' ? 'text-green-400' : 'text-red-400'}`}>
-                    <span>{stat.trend.direction === 'up' ? '↑' : '↓'} {stat.trend.value}%</span>
-                    <span className="ml-1">from last week</span>
-                  </div>
-                )}
               </div>
-            ))}
-          </div>
-        </header>
+              {stat.trend && (
+                <div className={`flex items-center mt-4 text-sm ${stat.trend.direction === 'up' ? 'text-green-400' : 'text-red-400'}`}>
+                  <span>{stat.trend.direction === 'up' ? '↑' : '↓'} {stat.trend.value}%</span>
+                  <span className="ml-1">from last week</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
 
         {/* Task List Section */}
         <section className="mb-8">
@@ -458,7 +357,7 @@ const DashboardPage = () => {
           </div>
 
           {/* Task List */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-x-auto shadow-xl">
             {loading ? (
               <div className="p-8 text-center text-gray-500">Loading tasks...</div>
             ) : tasks.length === 0 ? (
@@ -473,7 +372,7 @@ const DashboardPage = () => {
                 </button>
               </div>
             ) : (
-              <table className="w-full">
+              <table className="w-full min-w-[700px]">
                 <thead className="border-b border-gray-700">
                   <tr>
                     <th className="text-left p-4 text-gray-400 font-normal">Task</th>
@@ -512,12 +411,13 @@ const DashboardPage = () => {
                       <td className="p-4">
                         <button
                           onClick={() => handleToggleComplete(task.id, task.completed)}
-                          className={`inline-block px-2 py-1 rounded-full text-xs ${task.completed
-                            ? 'bg-green-500/20 text-green-400'
-                            : 'bg-gray-500/20 text-gray-400'
-                            } hover:opacity-80 transition-opacity`}
+                          className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all ${task.completed
+                            ? 'bg-green-500 border-green-500 text-white'
+                            : 'border-gray-600 hover:border-blue-500 text-transparent'
+                            }`}
+                          title={task.completed ? "Mark as incomplete" : "Mark as complete"}
                         >
-                          {task.completed ? 'Completed' : 'Active'}
+                          <CheckCircle className={`w-5 h-5 ${task.completed ? 'block' : 'group-hover:text-blue-500/50'}`} />
                         </button>
                       </td>
                       <td className="p-4">
@@ -551,7 +451,7 @@ const DashboardPage = () => {
           <h2 className="text-xl font-bold text-white mb-6">Analytics</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Task Status Distribution */}
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 shadow-lg">
               <h3 className="text-lg font-medium text-white mb-4">Task Status Overview</h3>
               {stats ? (
                 <div className="space-y-4">
@@ -592,7 +492,7 @@ const DashboardPage = () => {
             </div>
 
             {/* Tasks by Category */}
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 shadow-lg">
               <h3 className="text-lg font-medium text-white mb-4">Tasks by Category</h3>
               {stats && tasks.length > 0 ? (
                 <SimplePieChart
@@ -629,7 +529,7 @@ const DashboardPage = () => {
             </div>
 
             {/* Priority Distribution */}
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 shadow-lg">
               <h3 className="text-lg font-medium text-white mb-4">Tasks by Priority</h3>
               {tasks.length > 0 ? (
                 <SimpleBarChart
@@ -654,11 +554,11 @@ const DashboardPage = () => {
               )}
             </div>
 
-            {/* Weekly Activity */}
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            {/* Recent Activity */}
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 shadow-lg">
               <h3 className="text-lg font-medium text-white mb-4">Recent Activity</h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg border border-gray-700/50">
                   <div className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span className="text-gray-300">Tasks Completed Today</span>
@@ -669,7 +569,7 @@ const DashboardPage = () => {
                     ).length}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg border border-gray-700/50">
                   <div className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <span className="text-gray-300">Tasks Created This Week</span>
@@ -683,7 +583,7 @@ const DashboardPage = () => {
                     }).length}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg border border-gray-700/50">
                   <div className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                     <span className="text-gray-300">Active Tasks</span>
@@ -692,7 +592,7 @@ const DashboardPage = () => {
                     {tasks.filter(t => !t.completed).length}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg border border-gray-700/50">
                   <div className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                     <span className="text-gray-300">Overdue Tasks</span>
@@ -703,16 +603,8 @@ const DashboardPage = () => {
             </div>
           </div>
         </section>
-      </main>
-
-      {/* Overlay for mobile menu */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
-          onClick={toggleMobileMenu}
-        ></div>
-      )}
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

@@ -221,7 +221,7 @@ export default function TodayPage() {
                         </button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         {tasks.map((task) => (
                             <TaskCard
                                 key={task.id}

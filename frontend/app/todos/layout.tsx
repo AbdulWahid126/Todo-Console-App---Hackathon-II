@@ -10,8 +10,8 @@ function useAuth() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // Check if user is authenticated (in a real app, check for stored token)
-    const token = localStorage.getItem('auth-token') || document.cookie.includes('auth-token');
+    // Check if user is authenticated
+    const token = localStorage.getItem('access_token');
 
     // For now, we'll simulate authentication status
     // In a real app, this would be replaced with actual token validation

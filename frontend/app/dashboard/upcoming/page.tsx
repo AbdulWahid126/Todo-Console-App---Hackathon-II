@@ -242,7 +242,7 @@ export default function UpcomingPage() {
                                     </span>
                                     {date}
                                 </h2>
-                                <div className="grid grid-cols-1 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                     {dateTasks.map((task) => (
                                         <TaskCard
                                             key={task.id}

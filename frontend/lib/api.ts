@@ -450,3 +450,24 @@ export async function fetchFilteredTasks(
     throw error;
   }
 }
+
+/**
+ * Fetch todos grouped by category
+ */
+export async function fetchTodosByCategory(token: string): Promise<Record<string, TaskSummary[]>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/todos/by-category`, {
+      headers: getAuthHeaders(token),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch tasks by category: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching tasks by category:', error);
+    throw error;
+  }
+}

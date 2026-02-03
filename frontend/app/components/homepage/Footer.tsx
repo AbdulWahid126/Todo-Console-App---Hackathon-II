@@ -6,16 +6,16 @@ import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 
 const footerLinks = {
   product: [
-    { label: 'Features', href: '#' },
-    { label: 'Pricing', href: '#' },
-    { label: 'FAQ', href: '#' },
+    { label: 'Features', href: '/#features' },
+    { label: 'Pricing', href: '/pricing' },
+    { label: 'FAQ', href: '/#faq' },
     { label: 'Documentation', href: '#' }
   ],
   company: [
-    { label: 'About', href: '#' },
+    { label: 'About', href: '/about' },
     { label: 'Blog', href: '#' },
     { label: 'Careers', href: '#' },
-    { label: 'Contact', href: '#' }
+    { label: 'Contact', href: '/contact' }
   ],
   resources: [
     { label: 'Help Center', href: '#' },

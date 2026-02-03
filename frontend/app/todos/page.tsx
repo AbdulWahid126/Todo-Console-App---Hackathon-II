@@ -14,45 +14,72 @@ import { fetchTodos, deleteTodo, updateTodo } from '../../lib/api';
 import TodoList from '../../components/TodoList';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorMessage from '../../components/ErrorMessage';
+import DashboardLayout from '../../components/DashboardLayout';
+import { User, DashboardStats } from '../../lib/types';
+import { fetchDashboardStats, getUserProfile } from '../../lib/api';
 
 export default function TodoListPage() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch todos on component mount
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+
+  // Fetch data on component mount
   useEffect(() => {
-    const loadTodos = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const fetchedTodos = await fetchTodos();
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          window.location.href = '/auth/signin';
+          return;
+        }
+
+        const [fetchedTodos, fetchedStats, fetchedUser] = await Promise.all([
+          fetchTodos(token),
+          fetchDashboardStats(token),
+          getUserProfile(token)
+        ]);
+
         setTodos(fetchedTodos);
+        setStats(fetchedStats);
+        setUser(fetchedUser);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load todos');
+        setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
         setLoading(false);
       }
     };
 
-    loadTodos();
+    loadData();
   }, []);
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteTodo(id);
+      const token = localStorage.getItem('access_token');
+      if (!token) return;
+      await deleteTodo(id, token);
       // Optimistically update the UI by removing the deleted todo
       setTodos(todos.filter(todo => todo.id !== id));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete todo');
       // Reload todos to revert optimistic update
-      const fetchedTodos = await fetchTodos();
-      setTodos(fetchedTodos);
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        const fetchedTodos = await fetchTodos(token);
+        setTodos(fetchedTodos);
+      }
     }
   };
 
   const handleToggleComplete = async (id: string) => {
     try {
+      const token = localStorage.getItem('access_token');
+      if (!token) return;
+
       const todo = todos.find(t => t.id === id);
       if (!todo) return;
 
@@ -63,7 +90,7 @@ export default function TodoListPage() {
       setTodos(updatedTodos);
 
       // Update on the server
-      const updatedTodo = await updateTodo(id, { completed: !todo.completed });
+      const updatedTodo = await updateTodo(id, { completed: !todo.completed }, token);
 
       // Update the local state with the server response to ensure consistency
       setTodos(prevTodos =>
@@ -72,38 +99,48 @@ export default function TodoListPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update todo');
       // Reload todos to revert optimistic update if the server request failed
-      const fetchedTodos = await fetchTodos();
-      setTodos(fetchedTodos);
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        const fetchedTodos = await fetchTodos(token);
+        setTodos(fetchedTodos);
+      }
     }
   };
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Todo List</h1>
-        <Link
-          href="/todos/new"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          Create New Todo
-        </Link>
-      </div>
-
-      {error && <ErrorMessage message={error} />}
-
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <LoadingSpinner size="lg" label="Loading todos..." />
+    <DashboardLayout stats={stats} showAddButton={false}>
+      <div className="py-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-white">All Tasks</h1>
+            <p className="text-gray-400 mt-1">Manage all your todos in one place</p>
+          </div>
+          <Link
+            href="/todos/new"
+            className="inline-flex items-center justify-center px-6 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-lg shadow-blue-500/20"
+          >
+            Create New Todo
+          </Link>
         </div>
-      ) : (
-        <TodoList
-          todos={todos}
-          onDelete={handleDelete}
-          onToggleComplete={handleToggleComplete}
-          loading={loading}
-          error={error}
-        />
-      )}
-    </div>
+
+        {error && <ErrorMessage message={error} />}
+
+        {loading ? (
+          <div className="flex justify-center items-center h-64 bg-gray-800/30 rounded-xl border border-gray-700">
+            <LoadingSpinner size="lg" label="Loading tasks..." />
+          </div>
+        ) : (
+          <div className="bg-gray-800/30 rounded-xl border border-gray-700 overflow-hidden shadow-xl">
+            <TodoList
+              todos={todos}
+              onDelete={handleDelete}
+              onToggleComplete={handleToggleComplete}
+              loading={loading}
+              error={error}
+            />
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }

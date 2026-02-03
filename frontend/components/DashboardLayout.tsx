@@ -86,11 +86,11 @@ export default function DashboardLayout({
 
             {/* Sidebar */}
             <aside
-                className={`fixed md:relative z-40 h-full bg-gray-900 text-white transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0 md:w-72'
+                className={`fixed md:sticky top-0 z-40 h-screen bg-gray-900 border-r border-gray-800 text-white transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
                     }`}
                 style={{
-                    width: sidebarOpen ? '280px' : '0px',
-                    minWidth: sidebarOpen ? '280px' : '0px'
+                    width: '280px',
+                    minWidth: '280px'
                 }}
             >
                 <div className="h-full flex flex-col">
@@ -120,8 +120,8 @@ export default function DashboardLayout({
                                     <a
                                         href={item.href}
                                         className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${pathname === item.href
-                                                ? 'bg-blue-500/20 border-l-4 border-blue-500'
-                                                : 'hover:bg-gray-800'
+                                            ? 'bg-blue-500/20 border-l-4 border-blue-500'
+                                            : 'hover:bg-gray-800'
                                             }`}
                                     >
                                         {item.icon}
@@ -164,12 +164,12 @@ export default function DashboardLayout({
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 p-6 md:ml-72">
+            <main className="flex-1 min-w-0 p-4 md:p-8">
                 {/* Header */}
                 <header className="mb-8">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                        <div className="flex items-center space-x-4 mt-4 md:mt-0 ml-auto">
-                            <div className="relative">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div className="flex flex-wrap items-center gap-4 mt-4 md:mt-0 ml-auto w-full md:w-auto">
+                            <div className="relative flex-1 md:flex-none">
                                 <input
                                     type="text"
                                     placeholder="Search tasks..."
@@ -179,25 +179,27 @@ export default function DashboardLayout({
                                 />
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                             </div>
-                            <button className="relative p-2 rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
-                                <Bell className="w-5 h-5" />
-                                <span className="absolute top-0 right-0 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
-                            </button>
-                            <div className="flex items-center space-x-3">
-                                <div className="bg-blue-500 rounded-full w-8 h-8 flex items-center justify-center">
-                                    <User className="w-4 h-4" />
-                                </div>
-                                <span className="hidden md:inline text-white">{currentUser?.name || 'User'}</span>
-                            </div>
-                            {showAddButton && onAddTask && (
-                                <button
-                                    onClick={onAddTask}
-                                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    <span>Add Task</span>
+                            <div className="flex items-center gap-4">
+                                <button className="relative p-2 rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700">
+                                    <Bell className="w-5 h-5" />
+                                    <span className="absolute top-0 right-0 bg-red-500 text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
                                 </button>
-                            )}
+                                <div className="flex items-center space-x-3">
+                                    <div className="bg-blue-500 rounded-full w-8 h-8 flex items-center justify-center">
+                                        <User className="w-4 h-4" />
+                                    </div>
+                                    <span className="hidden sm:inline text-white">{currentUser?.name || 'User'}</span>
+                                </div>
+                                {showAddButton && onAddTask && (
+                                    <button
+                                        onClick={onAddTask}
+                                        className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        <span className="hidden sm:inline">Add Task</span>
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </header>
