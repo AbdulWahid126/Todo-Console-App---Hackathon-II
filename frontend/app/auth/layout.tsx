@@ -12,7 +12,7 @@ export default function AuthLayout({
           <div className="flex justify-between items-center h-16">
             <div className="text-xl font-bold">
               <Link href="/" className="text-white hover:text-gray-300">
-                TodoApp
+                TodoZz
               </Link>
             </div>
             <nav className="flex space-x-4">

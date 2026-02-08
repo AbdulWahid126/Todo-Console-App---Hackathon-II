@@ -75,7 +75,7 @@ export default function SignInPage() {
           <div className="text-center mb-8">
             <div className="text-3xl font-bold mb-2">
               <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                TodoApp
+                TodoZz
               </span>
             </div>
             <h1 className="text-2xl font-semibold text-white">Welcome Back</h1>

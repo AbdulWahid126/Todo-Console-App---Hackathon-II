@@ -40,7 +40,7 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <div className="text-2xl font-bold mb-4">
               <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                TodoApp
+                TodoZz
               </span>
             </div>
             <p className="text-gray-400 mb-6 max-w-xs">

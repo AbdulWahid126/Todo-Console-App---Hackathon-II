@@ -41,7 +41,7 @@ export default function Header() {
           <div className="flex-shrink-0">
             <Link href="/" className="text-2xl font-bold">
               <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                TodoApp
+                TodoZz
               </span>
             </Link>
           </div>

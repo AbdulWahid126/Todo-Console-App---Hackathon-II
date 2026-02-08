@@ -16,10 +16,40 @@ from models.todo import Todo
 from database.session import engine
 from dependencies import get_db
 import os
+import logging
+import traceback
+from typing import List, Union
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# --- PASSLIB BCRYPT COMPATIBILITY PATCH ---
+# This fixes "TypeError: Names must be strings" when using passlib with bcrypt>=4.0.0
+import logging
+logging.getLogger('passlib').setLevel(logging.ERROR)
+
+try:
+    from passlib.context import CryptContext
+    import bcrypt
+    # Check if we need the patch (usually bcrypt >= 4.0.0)
+    if hasattr(bcrypt, "__version__") and int(bcrypt.__version__.split('.')[0]) >= 4:
+        from passlib.handlers.bcrypt import bcrypt as bcrypt_handler
+        # Monkey patch the bcrypt handler to handle the new bcrypt library structure
+        original_backend = bcrypt_handler._get_backend
+        def patched_get_backend():
+            backend = original_backend()
+            if hasattr(backend, "name") and not isinstance(backend.name, str):
+                backend.name = str(backend.name)
+            return backend
+        bcrypt_handler._get_backend = patched_get_backend
+except Exception as e:
+    print(f"Bcrypt patch failed: {e}")
+# ----------------------------------------
 
 from contextlib import asynccontextmanager
 
@@ -44,14 +74,17 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Get allowed origins from environment variable or use defaults
+allowed_origins_raw = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3005,http://127.0.0.1:3000,http://127.0.0.1:3005")
+allowed_origins = [origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()]
+
 # Add CORS middleware for cross-origin requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3005", "http://127.0.0.1:3000", "http://127.0.0.1:3005"],  # Frontend origins for development
-    allow_credentials=True,
+    allow_origins=allowed_origins if allowed_origins else ["*"],
+    allow_credentials=True if allowed_origins else False,
     allow_methods=["*"],
     allow_headers=["*"],
-    # Add other origins for production as needed
 )
 
 # Include API routers
@@ -88,9 +121,19 @@ async def generic_exception_handler(request, exc):
     Task: P2-T-041
     From: specs/phase-ii/contracts/api-contracts
     """
+    # Log the full traceback to stdout (visible in cloud logs)
+    error_msg = f"Unhandled exception: {str(exc)}"
+    print(f"ERROR: {error_msg}")
+    traceback.print_exc()
+    
+    # Return detail to frontend (helpful for initial debugging)
+    # In a strict production environment, you might want to hide this
     return JSONResponse(
         status_code=500,
-        content={"detail": "An internal error occurred"},
+        content={
+            "detail": "An internal error occurred",
+            "error": str(exc) if os.getenv("DEBUG") == "True" else "Check logs for details"
+        },
     )
 
 if __name__ == "__main__":
